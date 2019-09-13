@@ -85,28 +85,23 @@ int main(int argc, char *argv[])
     server.sin_addr.s_addr = INADDR_ANY;
     server.sin_port = htons(8888);
 
+    // Fix for address already in use error
     int yes = 1;
     setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
 
-    //Bind
     if (bind(socket_desc, (struct sockaddr *)&server, sizeof(server)) < 0)
     {
-        //print the error message
         perror("bind failed.Error ");
         return 1;
     }
     puts("bind done ");
 
-    //Listen
     listen(socket_desc, 3);
 
-    //Accept and incoming connection
     puts("Waiting for incoming connections...");
-    // c = sizeof(struct sockaddr_in);
 
     while (1)
     {
-        //accept connection from an incoming client
         client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t *)&c);
         if (client_sock < 0)
         {
@@ -119,7 +114,7 @@ int main(int argc, char *argv[])
         //Receive a message from client
         while ((read_size = recv(client_sock, client_message, 2000, 0)) > 0)
         {
-            // Need to put a stop
+            // Need to put a null byte at the end.
             client_message[read_size] = 0;
             char *end_header_pointer = strstr(client_message, header_sep);
             if (end_header_pointer == NULL)
@@ -139,7 +134,6 @@ int main(int argc, char *argv[])
             }
 
             puts("Got complete headers\n");
-
             puts("Headers: \n");
             puts(request_headers);
             puts("\n");
