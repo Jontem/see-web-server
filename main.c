@@ -54,6 +54,7 @@ int main(int argc, char *argv[])
         perror("bind failed.Error ");
         return 1;
     }
+
     puts("bind done ");
 
     listen(socket_desc, 3);
@@ -64,15 +65,13 @@ int main(int argc, char *argv[])
     int con_count = 0;
     while (1)
     {
-        // printf("Connections handled: %d\n", con_count);
-        // printQueuedConnections();
         client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t *)&c);
         if (client_sock < 0)
         {
             perror("accept failed ");
             return 1;
         }
-        // puts("Connection accepted ");
+
         queue_connection(client_sock);
         signal_connection();
         con_count++;
