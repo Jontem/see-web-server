@@ -48,9 +48,12 @@ void *connection_worker(void *args)
         }
 
         printf("Worker: %d waiting for signal\n", worker_id);
-        pthread_mutex_lock(&lock);
+
+        // In our case we dont use a predicate worth locking?
+        // https://stackoverflow.com/a/14925150/3534549
+        // pthread_mutex_lock(&lock);
         pthread_cond_wait(&cond1, &lock);
-        pthread_mutex_unlock(&lock);
+        // pthread_mutex_unlock(&lock);
         printf("Worker: %d woke up\n", worker_id);
     }
 }
