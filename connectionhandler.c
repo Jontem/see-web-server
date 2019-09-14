@@ -2,13 +2,54 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <pthread.h>
+#include "connectionhandler.h"
+#include "connectionqueue.h"
 
 const char HEADER_SEP[] = "\r\n\r\n";
 
-void handle_connection(int client_sock);
+void handle_connection(int worker_id, int client_sock);
 int write_response(int client_sock, char body[]);
 
-void handle_connection(int client_sock)
+pthread_cond_t cond1 = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_t *workers;
+
+void create_workers(int num_workers)
+{
+    workers = malloc(sizeof(pthread_t) * num_workers);
+    for (int i = 0; i < num_workers; i++)
+    {
+        char worker_name[20] = "\0";
+        pthread_create(&workers[i], NULL, connection_worker, i);
+    }
+}
+
+void signal_connection()
+{
+    pthread_cond_signal(&cond1);
+}
+
+void connection_worker(int worker_id)
+{
+    printf("Worker: %d started\n", worker_id);
+    while (1)
+    {
+        int client_sock = pop_connection();
+        if (client_sock > 0)
+        {
+            handle_connection(worker_id, client_sock);
+            continue;
+        }
+
+        printf("Worker: %d waiting for signal\n", worker_id);
+        pthread_mutex_lock(&lock);
+        pthread_cond_wait(&cond1, &lock);
+        pthread_mutex_unlock(&lock);
+        printf("Worker: %d woke up\n", worker_id);
+    }
+}
+void handle_connection(int worker_id, int client_sock)
 {
     int read_size;
     char client_message[2000] = "\0", request_headers[1000] = "\0";
@@ -44,12 +85,8 @@ void handle_connection(int client_sock)
             continue;
         }
 
-        puts("Got complete headers\n");
-        puts("Headers: \n");
-        puts(request_headers);
-        puts("\n");
-
         write_response(client_sock, "hello body");
+        printf("Worker%d: Connection handled. Socket closed\n", worker_id);
         break;
     }
 }
@@ -74,5 +111,6 @@ int write_response(int client_sock, char body[])
     write(client_sock, body, strlen(body));
     write(client_sock, new_line, strlen(new_line));
     close(client_sock);
+
     return 1;
 }

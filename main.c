@@ -5,6 +5,7 @@
 #include <unistd.h>    //write
 #include <signal.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include "stringutils.h"
 #include "connectionqueue.h"
 #include "connectionhandler.h"
@@ -57,20 +58,24 @@ int main(int argc, char *argv[])
 
     listen(socket_desc, 3);
 
-    puts("Waiting for incoming connections...");
+    create_workers(3);
 
+    puts("Waiting for incoming connections...");
+    int con_count = 0;
     while (1)
     {
+        // printf("Connections handled: %d\n", con_count);
+        // printQueuedConnections();
         client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t *)&c);
         if (client_sock < 0)
         {
             perror("accept failed ");
             return 1;
         }
-        puts("Connection accepted ");
+        // puts("Connection accepted ");
         queue_connection(client_sock);
-        printQueuedConnections();
-        handle_connection(pop_connection());
+        signal_connection();
+        con_count++;
     }
 
     return 0;
