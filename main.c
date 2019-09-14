@@ -1,12 +1,9 @@
 #include <stdio.h>
-#include <string.h> //strlen
+#include <string.h>
 #include <sys/socket.h>
-#include <arpa/inet.h> //inet_addr
-#include <unistd.h>    //write
-#include <signal.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 #include <stdlib.h>
-#include <pthread.h>
-#include "stringutils.h"
 #include "connectionqueue.h"
 #include "connectionhandler.h"
 

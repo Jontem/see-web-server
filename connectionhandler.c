@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -10,6 +11,7 @@ const char HEADER_SEP[] = "\r\n\r\n";
 
 void handle_connection(int worker_id, int client_sock);
 int write_response(int client_sock, char body[]);
+void *connection_worker(void *args);
 
 pthread_cond_t cond1 = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
@@ -21,7 +23,9 @@ void create_workers(int num_workers)
     for (int i = 0; i < num_workers; i++)
     {
         char worker_name[20] = "\0";
-        pthread_create(&workers[i], NULL, connection_worker, i);
+        int *worker_id = malloc(sizeof(int));
+        *worker_id = i;
+        pthread_create(&workers[i], NULL, &connection_worker, worker_id);
     }
 }
 
@@ -30,8 +34,9 @@ void signal_connection()
     pthread_cond_signal(&cond1);
 }
 
-void connection_worker(int worker_id)
+void *connection_worker(void *args)
 {
+    int worker_id = (*(int *)args);
     printf("Worker: %d started\n", worker_id);
     while (1)
     {
