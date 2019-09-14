@@ -1,0 +1,1 @@
+void string2hexString(char *input, char *output);
